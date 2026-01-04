@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History - Document Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+            padding: 40px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .header-card h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-card p {
+            color: #64748b;
+            font-size: 15px;
+        }
+        
+        .history-item {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideInLeft 0.5s ease-out both;
+        }
+        
+        .history-item:nth-child(1) { animation-delay: 0.1s; }
+        .history-item:nth-child(2) { animation-delay: 0.15s; }
+        .history-item:nth-child(3) { animation-delay: 0.2s; }
+        .history-item:nth-child(4) { animation-delay: 0.25s; }
+        .history-item:nth-child(5) { animation-delay: 0.3s; }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .history-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
+            border-left-color: #764ba2;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .file-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        
+        .filename {
+            color: #1e293b;
+            font-size: 16px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+        
+        .doc-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            white-space: nowrap;
+        }
+        
+        .history-details {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #64748b;
+            align-items: center;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .detail-icon {
+            font-size: 16px;
+        }
+        
+        .confidence-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .confidence-bar-mini {
+            width: 80px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill-mini {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.5s ease-out;
+        }
+        
+        .confidence-text {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .no-history {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            padding: 80px 40px;
+            animation: scaleIn 0.5s ease-out;
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .no-history-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .no-history h2 {
+            color: #1e293b;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .no-history p {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 32px;
+        }
+        
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px 32px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-around;
+            gap: 24px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .header-card,
+            .no-history {
+                padding: 32px 24px;
+            }
+            
+            .header-card h1 {
+                font-size: 26px;
+            }
+            
+            .history-item {
+                padding: 20px;
+            }
+            
+            .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .history-details {
+                width: 100%;
+            }
+            
+            .stats-bar {
+                gap: 16px;
+            }
+            
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-card">
+            <h1>📋 Analysis History</h1>
+            <p>View and manage your previous document analyses</p>
+        </div>
+        
+        {% if history %}
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">{{ history|length }}</div>
+                <div class="stat-label">Total Analyses</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Document Types</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ ((history|map(attribute='confidence')|sum / history|length) * 100)|int }}%</div>
+                <div class="stat-label">Avg Confidence</div>
+            </div>
+        </div>
+        
+        {% for item in history %}
+        <a href="/view/{{ item.result_file }}" class="history-item">
+            <div class="history-header">
+                <div class="file-info">
+                    <div class="file-icon">📄</div>
+                    <div class="filename">{{ item.filename }}</div>
+                </div>
+                <div class="doc-badge">{{ item.doc_type }}</div>
+            </div>
+            <div class="history-details">
+                <div class="detail-item">
+                    <span class="detail-icon">🕒</span>
+                    <span>{{ item.timestamp }}</span>
+                </div>
+                <div class="detail-item confidence-display">
+                    <span class="detail-icon">📊</span>
+                    <div class="confidence-bar-mini">
+                        <div class="confidence-fill-mini" style="width: {{ (item.confidence * 100)|int }}%"></div>
+                    </div>
+                    <span class="confidence-text">{{ (item.confidence * 100)|int }}%</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        
+        {% else %}
+        <div class="no-history">
+            <div class="no-history-icon">📭</div>
+            <h2>No Analysis History</h2>
+            <p>You haven't analyzed any documents yet. Start by uploading your first document.</p>
+            <a href="/" class="btn btn-primary">
+                <span>📤</span>
+                <span>Analyze Your First Document</span>
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="back-link">
+            <a href="/" class="btn btn-primary">
+                <span>🏠</span>
+                <span>Back to Home</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
