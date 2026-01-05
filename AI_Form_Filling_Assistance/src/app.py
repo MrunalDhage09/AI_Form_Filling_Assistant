@@ -188,6 +188,41 @@ def view_result(result_filename):
         return render_template("error.html", message=f"Error: {str(e)}"), 500
 
 
+@app.route("/update_result", methods=["POST"])
+def update_result():
+    """Update extracted fields with edited values."""
+    try:
+        data = request.json
+        timestamp = data.get('timestamp')
+        updated_fields = data.get('extracted_fields', {})
+        
+        if not timestamp:
+            return jsonify({"success": False, "error": "No timestamp provided"}), 400
+        
+        # Find the result file
+        result_file = UPLOAD_DIR / f"{timestamp}_result.json"
+        
+        if not result_file.exists():
+            return jsonify({"success": False, "error": "Result file not found"}), 404
+        
+        # Read existing result
+        existing_result = json.loads(result_file.read_text(encoding='utf-8'))
+        
+        # Update the extracted fields
+        existing_result['extracted_fields'] = updated_fields
+        existing_result['last_edited'] = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save updated result
+        result_file.write_text(json.dumps(existing_result, indent=2, ensure_ascii=False), encoding='utf-8')
+        
+        return jsonify({"success": True, "message": "Changes saved successfully"})
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"Error updating result: {e}\n{tb}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
     tb = traceback.format_exc()

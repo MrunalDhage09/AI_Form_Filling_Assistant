@@ -67,6 +67,37 @@
             font-weight: 500;
         }
         
+        .edit-mode-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .edit-mode-banner .icon {
+            font-size: 24px;
+        }
+        
+        .edit-mode-banner .text {
+            flex: 1;
+        }
+        
+        .edit-mode-banner .title {
+            color: #92400e;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .edit-mode-banner .description {
+            color: #b45309;
+            font-size: 13px;
+        }
+        
         .file-info-banner {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             border: 1px solid #bae6fd;
@@ -255,34 +286,82 @@
             gap: 6px;
         }
         
-        .field-value {
-            color: #1e293b;
+        .field-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .field-input {
+            flex: 1;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
             font-size: 16px;
             font-weight: 600;
-            word-break: break-word;
-            line-height: 1.5;
-        }
-        
-        .lang-en {
             color: #1e293b;
-            margin-bottom: 6px;
-            padding: 4px 8px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 6px;
-            display: inline-block;
+            transition: all 0.3s;
         }
         
-        .lang-hi {
-            color: #764ba2;
+        .field-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .field-input.hindi {
             font-family: 'Noto Sans Devanagari', 'Mangal', sans-serif;
-            padding: 4px 8px;
-            background: rgba(118, 75, 162, 0.1);
-            border-radius: 6px;
-            display: inline-block;
+        }
+        
+        .voice-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 18px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .voice-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .voice-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .voice-btn.listening {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
         
         .field-full {
             grid-column: 1 / -1;
+        }
+        
+        .field-full .field-input {
+            min-height: 80px;
+        }
+        
+        .lang-separator {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 8px 0 4px 0;
+            text-transform: uppercase;
         }
         
         .no-data {
@@ -423,6 +502,51 @@
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
         
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast.show {
+            display: flex;
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
         @media (max-width: 768px) {
             .card {
                 padding: 24px;
@@ -461,6 +585,14 @@
                 {% endif %}
             </div>
             
+            <div class="edit-mode-banner">
+                <div class="icon">✏️</div>
+                <div class="text">
+                    <div class="title">Editable Mode Active</div>
+                    <div class="description">Click on fields to edit or use 🎤 voice input. Changes are saved automatically.</div>
+                </div>
+            </div>
+            
             <div class="file-info-banner">
                 <div class="file-info-content">
                     <div class="file-icon">📎</div>
@@ -497,189 +629,249 @@
         <div class="card">
             <h2 class="section-title">
                 <span class="section-icon">🔍</span>
-                <span>Extracted Information</span>
+                <span>Extracted Information (Editable)</span>
             </h2>
             
             {% if result.extracted_fields %}
-            <div class="field-grid">
-                {% if result.extracted_fields.document_id %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>🆔</span>
-                        <span>Document ID</span>
+            <form id="editForm">
+                <input type="hidden" id="timestamp" value="{{ result.upload_timestamp }}">
+                <div class="field-grid">
+                    {% if result.extracted_fields.document_id %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🆔</span>
+                            <span>Document ID</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="document_id" name="document_id" value="{{ result.extracted_fields.document_id }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('document_id', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.document_id }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.name or result.extracted_fields.name_hindi %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>👤</span>
-                        <span>Name / नाम</span>
-                    </div>
-                    <div class="field-value">
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.name or result.extracted_fields.name_hindi %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👤</span>
+                            <span>Name / नाम</span>
+                        </div>
                         {% if result.extracted_fields.name %}
-                        <div class="lang-en">🇬🇧 {{ result.extracted_fields.name }}</div>
+                        <div class="lang-separator">🇬🇧 English</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="name" name="name" value="{{ result.extracted_fields.name }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('name', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                         {% if result.extracted_fields.name_hindi %}
-                        <div class="lang-hi">🇮🇳 {{ result.extracted_fields.name_hindi }}</div>
+                        <div class="lang-separator">🇮🇳 हिन्दी</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input hindi" id="name_hindi" name="name_hindi" value="{{ result.extracted_fields.name_hindi }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('name_hindi', 'hi-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.date_of_birth %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>🎂</span>
-                        <span>Date of Birth / जन्म तिथि</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.date_of_birth %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🎂</span>
+                            <span>Date of Birth / जन्म तिथि</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="date_of_birth" name="date_of_birth" value="{{ result.extracted_fields.date_of_birth }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('date_of_birth', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.date_of_birth }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.gender %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>⚧</span>
-                        <span>Gender / लिंग</span>
-                    </div>
-                    <div class="field-value">
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.gender %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>⚧</span>
+                            <span>Gender / लिंग</span>
+                        </div>
                         {% if result.extracted_fields.gender %}
-                        <div class="lang-en">🇬🇧 {{ result.extracted_fields.gender }}</div>
+                        <div class="lang-separator">🇬🇧 English</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="gender" name="gender" value="{{ result.extracted_fields.gender }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('gender', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                         {% if result.extracted_fields.gender_hindi %}
-                        <div class="lang-hi">🇮🇳 {{ result.extracted_fields.gender_hindi }}</div>
+                        <div class="lang-separator">🇮🇳 हिन्दी</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input hindi" id="gender_hindi" name="gender_hindi" value="{{ result.extracted_fields.gender_hindi }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('gender_hindi', 'hi-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.father_name or result.extracted_fields.father_name_hindi %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>👨</span>
-                        <span>Father's Name / पिता का नाम</span>
-                    </div>
-                    <div class="field-value">
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.father_name or result.extracted_fields.father_name_hindi %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👨</span>
+                            <span>Father's Name / पिता का नाम</span>
+                        </div>
                         {% if result.extracted_fields.father_name %}
-                        <div class="lang-en">🇬🇧 {{ result.extracted_fields.father_name }}</div>
+                        <div class="lang-separator">🇬🇧 English</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="father_name" name="father_name" value="{{ result.extracted_fields.father_name }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('father_name', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                         {% if result.extracted_fields.father_name_hindi %}
-                        <div class="lang-hi">🇮🇳 {{ result.extracted_fields.father_name_hindi }}</div>
+                        <div class="lang-separator">🇮🇳 हिन्दी</div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input hindi" id="father_name_hindi" name="father_name_hindi" value="{{ result.extracted_fields.father_name_hindi }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('father_name_hindi', 'hi-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.date_of_issue %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>📅</span>
-                        <span>Date of Issue</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.mobile %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📱</span>
+                            <span>Mobile Number</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="mobile" name="mobile" value="{{ result.extracted_fields.mobile }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('mobile', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.date_of_issue }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.date_of_expiry %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>⏰</span>
-                        <span>Date of Expiry</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.email %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>✉️</span>
+                            <span>Email</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="email" name="email" value="{{ result.extracted_fields.email }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('email', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.date_of_expiry }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.mobile %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>📱</span>
-                        <span>Mobile Number</span>
-                    </div>
-                    <div class="field-value">{{ result.extracted_fields.mobile }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.email %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>✉️</span>
-                        <span>Email</span>
-                    </div>
-                    <div class="field-value">{{ result.extracted_fields.email }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.address or result.extracted_fields.address_hindi %}
-                <div class="field field-full">
-                    <div class="field-label">
-                        <span>📍</span>
-                        <span>Address / पता</span>
-                    </div>
-                    <div class="field-value">
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.address or result.extracted_fields.address_hindi %}
+                    <div class="field field-full">
+                        <div class="field-label">
+                            <span>📍</span>
+                            <span>Address / पता</span>
+                        </div>
                         {% if result.extracted_fields.address %}
-                        <div class="lang-en">🇬🇧 {{ result.extracted_fields.address }}</div>
+                        <div class="lang-separator">🇬🇧 English</div>
+                        <div class="field-input-group">
+                            <textarea class="field-input" id="address" name="address" rows="3">{{ result.extracted_fields.address }}</textarea>
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('address', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                         {% if result.extracted_fields.address_hindi %}
-                        <div class="lang-hi">🇮🇳 {{ result.extracted_fields.address_hindi }}</div>
+                        <div class="lang-separator">🇮🇳 हिन्दी</div>
+                        <div class="field-input-group">
+                            <textarea class="field-input hindi" id="address_hindi" name="address_hindi" rows="3">{{ result.extracted_fields.address_hindi }}</textarea>
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('address_hindi', 'hi-IN')" title="Voice Input">🎤</button>
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.enrollment_no %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>📋</span>
-                        <span>Enrollment No / नोंदणी क्रमांक</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.enrollment_no %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📋</span>
+                            <span>Enrollment No / नोंदणी क्रमांक</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="enrollment_no" name="enrollment_no" value="{{ result.extracted_fields.enrollment_no }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('enrollment_no', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.enrollment_no }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.vid %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>🔢</span>
-                        <span>VID</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.vid %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🔢</span>
+                            <span>VID</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="vid" name="vid" value="{{ result.extracted_fields.vid }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('vid', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.vid }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.pin_code %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>📮</span>
-                        <span>PIN Code</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.pin_code %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📮</span>
+                            <span>PIN Code</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="pin_code" name="pin_code" value="{{ result.extracted_fields.pin_code }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('pin_code', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.pin_code }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.place_of_birth %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>🏠</span>
-                        <span>Place of Birth</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.date_of_issue %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📅</span>
+                            <span>Date of Issue</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="date_of_issue" name="date_of_issue" value="{{ result.extracted_fields.date_of_issue }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('date_of_issue', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.place_of_birth }}</div>
-                </div>
-                {% endif %}
-                
-                {% if result.extracted_fields.place_of_issue %}
-                <div class="field">
-                    <div class="field-label">
-                        <span>🏢</span>
-                        <span>Place of Issue</span>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.date_of_expiry %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>⏰</span>
+                            <span>Date of Expiry</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="date_of_expiry" name="date_of_expiry" value="{{ result.extracted_fields.date_of_expiry }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('date_of_expiry', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
                     </div>
-                    <div class="field-value">{{ result.extracted_fields.place_of_issue }}</div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.place_of_birth %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🏠</span>
+                            <span>Place of Birth</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="place_of_birth" name="place_of_birth" value="{{ result.extracted_fields.place_of_birth }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('place_of_birth', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.place_of_issue %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🏢</span>
+                            <span>Place of Issue</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="place_of_issue" name="place_of_issue" value="{{ result.extracted_fields.place_of_issue }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('place_of_issue', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-            </div>
+            </form>
             {% else %}
             <p class="no-data">⚠️ No information could be extracted from the document.</p>
             {% endif %}
@@ -700,13 +892,17 @@
         
         <div class="card">
             <div class="actions">
+                <button type="button" class="btn btn-success" onclick="saveChanges()">
+                    <span>💾</span>
+                    <span>Save Changes</span>
+                </button>
+                <a href="/export/json" class="btn btn-warning">
+                    <span>📥</span>
+                    <span>Download JSON</span>
+                </a>
                 <a href="/" class="btn btn-primary">
                     <span>📤</span>
                     <span>Analyze Another</span>
-                </a>
-                <a href="/export/json" class="btn btn-success">
-                    <span>💾</span>
-                    <span>Download JSON</span>
                 </a>
                 <a href="/history" class="btn btn-secondary">
                     <span>📋</span>
@@ -716,7 +912,119 @@
         </div>
     </div>
     
+    <div id="toast" class="toast">
+        <span id="toastIcon">✓</span>
+        <span id="toastMessage">Saved successfully!</span>
+    </div>
+    
     <script>
+        // Voice Recognition Setup
+        let recognition = null;
+        let currentField = null;
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+        }
+        
+        function startVoiceInput(fieldId, language) {
+            if (!recognition) {
+                showToast('Voice recognition not supported in this browser', 'error');
+                return;
+            }
+            
+            const field = document.getElementById(fieldId);
+            const btn = event.target.closest('.voice-btn');
+            
+            currentField = field;
+            recognition.lang = language;
+            
+            btn.classList.add('listening');
+            btn.innerHTML = '⏸️';
+            
+            recognition.start();
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                field.value = transcript;
+                btn.classList.remove('listening');
+                btn.innerHTML = '🎤';
+                showToast('Voice input captured: ' + transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                btn.classList.remove('listening');
+                btn.innerHTML = '🎤';
+                showToast('Voice input error: ' + event.error, 'error');
+            };
+            
+            recognition.onend = function() {
+                btn.classList.remove('listening');
+                btn.innerHTML = '🎤';
+            };
+        }
+        
+        function saveChanges() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            const timestamp = document.getElementById('timestamp').value;
+            
+            const data = {
+                timestamp: timestamp,
+                extracted_fields: {}
+            };
+            
+            for (let [key, value] of formData.entries()) {
+                if (value) {
+                    data.extracted_fields[key] = value;
+                }
+            }
+            
+            fetch('/update_result', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('✓ Changes saved successfully!');
+                } else {
+                    showToast('Failed to save changes: ' + result.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error saving changes', 'error');
+            });
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            if (type === 'error') {
+                toast.classList.add('error');
+                toastIcon.textContent = '✗';
+            } else {
+                toast.classList.remove('error');
+                toastIcon.textContent = '✓';
+            }
+            
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
         function copyText() {
             const text = document.getElementById('ocrText').innerText;
             navigator.clipboard.writeText(text).then(() => {
@@ -730,6 +1038,18 @@
                 }, 2000);
             });
         }
+        
+        // Auto-save on field change (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.field-input');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    // Auto-save when user leaves a field
+                    // Uncomment if you want auto-save:
+                    // saveChanges();
+                });
+            });
+        });
     </script>
 </body>
 </html>
