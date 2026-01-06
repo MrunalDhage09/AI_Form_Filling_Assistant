@@ -1,0 +1,21 @@
+{
+  "filename": "9b8c53a4c660466386cbe0992178b211.jpeg",
+  "upload_timestamp": "20260107_005025",
+  "document_type": "AADHAAR",
+  "classification_confidence": 0.58,
+  "extraction_method": "easyocr",
+  "extracted_text": "आधार\n0([() 000%007\nभारतीय विशिष्टओळ्ख प्राधिकरण\nभारत सरकार\nLlniaue Identification Authoritv Of India\nGovernment of India\nनोंदणी क्रमांकः / Enrolment No. : 0636/00520/07859\n8 |0\nशन चंद्रशेखर अहरकर\nडू Rar Chandrashekhar Aherkar\nsuphal krupa housing society, malkapur Shritam\n३ near samay provision\nडै Rkola\nAkola 444001\nAkola Maharashtra\n8087243629\n8\nViillo  Cpanown\n३\n8\nडै\n$\nईँ\nआपला आधार क्रमांक / Your Aadhaar No. :\n6713 3842 5045\nVID 9120 3595 3405 8780\nमाझ आधार, माझी ओळख\nभारत सरकार\nGovernment of India\nराम चंद्रशेखर अहरकर\nRam Chandrashekhar Anerkar\nजन्न ताराख/D08: 1 ३/0७/२००1\nपुरुष / MALE\n6713 3842 5045\nMID 9120 3595 3405 8780\nमाझे आधार , माझी ओळख",
+  "extracted_fields": {
+    "document_id": "671338425045",
+    "aadhaar_number": "671338425045",
+    "vid": "9120359534058780",
+    "enrollment_no": "0636/00520/07859",
+    "name": "Rar Chandrashekhar Aherkar",
+    "name_hindi": "शन चंद्रशेखर अहरकर",
+    "pin_code": "444001",
+    "address": "suphal krupa housing society, malkapur Shritam, near samay provision, Rkola, Akola 444001, Akola Maharashtra, Viillo Cpanown",
+    "gender": "Male",
+    "gender_hindi": "पुरुष"
+  },
+  "status": "success"
+}

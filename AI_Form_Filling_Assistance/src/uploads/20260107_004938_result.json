@@ -1,0 +1,20 @@
+{
+  "filename": "voter2.pdf",
+  "upload_timestamp": "20260107_004938",
+  "document_type": "VOTER_ID",
+  "classification_confidence": 1.0,
+  "extraction_method": "easyocr",
+  "extracted_text": "भारत निर्वाचन आयोग\nELECTION COMMISSION OF INDIA\nमतदाता फोटो पहचान पत्र Elector Photo Identity Card\nKKD1933993\nनामः अभिषेक कुमार सिंह\nName: Abhishek Kumar Singh\nSingh\nपिता का नामः लालबाबु सिंह\nFather's Name: Lalababu Singh\nलिंग / Genderः पुरुष Male\nजन्म तिथि / आयुः\nDate of Birth / Age: 11-08-1९९०",
+  "extracted_fields": {
+    "document_id": "KKD1933993",
+    "voter_id": "KKD1933993",
+    "gender": "Male",
+    "gender_hindi": "पुरुष",
+    "date_of_birth": "11/08/1990",
+    "name": "Abhishek Kumar Singh",
+    "name_hindi": "अभिषेक कुमार सिंह",
+    "father_name": "Lalababu Singh",
+    "father_name_hindi": "लालबाबु सिंह"
+  },
+  "status": "success"
+}

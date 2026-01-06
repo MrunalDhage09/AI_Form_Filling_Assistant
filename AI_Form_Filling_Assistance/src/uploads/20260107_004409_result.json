@@ -1,0 +1,16 @@
+{
+  "filename": "1000054572.jpg",
+  "upload_timestamp": "20260107_004409",
+  "document_type": "PASSPORT",
+  "classification_confidence": 0.32,
+  "extraction_method": "easyocr",
+  "extracted_text": "मासत गणराज्य / REPUBLICOSINDIA\nरोड / Code शीयना Natonal!ey पसपारँ २ / Pus#eा No\n_रप Type\nभारतीय INDIAN\nIND\nU9932936\nसरभाग Surann2\nAHERKAR\nदिया गया नाम / Given Namets)\nRAM CHANDRASHEKHAR\nजन्मतिथि / Date of Birth लिंग\nSex\n13/07/2001\nM\nजन्म स्थान/ Place of Birth\nAKOLA , MAHARASHTRA\nजारी करने का स्थान/ Place रof Issue\nNAGPUR\nशlkax\nजारी करने की तिथि/ Date of Issue समाप्ति की तिथि/ Dateo Epiry\n18/11/2021 17/11/2031\nPAINDAHERKAR<<RANKCHANDRASHEKHAR<<<<<<<<<<<<\n09932936<11N0010713813111172c065786080221<98",
+  "extracted_fields": {
+    "document_id": "U9932936",
+    "passport_number": "U9932936",
+    "place_of_birth": "AKOLA , MAHARASHTRA",
+    "name": "TS",
+    "given_name": "TS"
+  },
+  "status": "success"
+}

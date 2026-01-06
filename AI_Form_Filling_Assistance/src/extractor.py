@@ -3,8 +3,9 @@ Document information extractor optimized for Indian government documents.
 Patterns based on actual document samples:
 - Aadhaar Card (UIDAI format - both physical and e-Aadhaar)
 - PAN Card (Income Tax Department)
-- Passport (Republic of India)
 - Voter ID (Election Commission)
+- Driving License (State RTOs)
+- Handwritten Forms (Name, DOB, Address, etc.)
 """
 
 import re
@@ -101,9 +102,6 @@ VID_PATTERN = re.compile(r'\b(\d{4}\s?\d{4}\s?\d{4}\s?\d{4})\b')
 
 # PAN: exactly 10 characters (5 letters + 4 digits + 1 letter)
 PAN_PATTERN = re.compile(r'\b([A-Z]{5}[0-9]{4}[A-Z])\b')
-
-# Passport: exactly 8 characters (1 letter + 7 digits, e.g., Z0000000)
-PASSPORT_PATTERN = re.compile(r'\b([A-Z][0-9]{7})\b')
 
 # Voter ID: exactly 10 characters (3 letters + 7 digits, e.g., KKD1933993)
 VOTER_ID_PATTERN = re.compile(r'\b([A-Z]{3}[0-9]{7})\b')
@@ -423,6 +421,20 @@ def extract_aadhaar(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
 
 # ==================== PAN EXTRACTION ====================
 
+def clean_name_from_numbers(name: str) -> str:
+    """
+    Remove date-like numbers and standalone digits from a name string.
+    E.g., "CHANDRASHEKHAR MANIKRAO 09112019" -> "CHANDRASHEKHAR MANIKRAO"
+    """
+    if not name:
+        return name
+    # Remove standalone numbers (dates, etc.)
+    cleaned = re.sub(r'\b\d+\b', '', name)
+    # Normalize spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
+
+
 def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
     """
     Extract information from PAN card.
@@ -452,6 +464,30 @@ def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
     father_name_hindi = None
     dob = None
     
+    # Track line indices for name and father's name labels
+    name_label_index = -1
+    father_label_index = -1
+    dob_label_index = -1
+    
+    # First pass: find label positions
+    for i, line in enumerate(lines):
+        line_lower = line.lower()
+        
+        # Find "Name" label (not Father's Name)
+        if ('name' in line_lower or 'नाम' in line) and 'father' not in line_lower and 'पिता' not in line:
+            if name_label_index == -1:
+                name_label_index = i
+        
+        # Find "Father's Name" label - handle OCR variations like "Father s Name"
+        # Also handle: "पिता का नाम", "father's name", "father s name", "fathers name"
+        if re.search(r"father'?s?\s+name|पिता\s*(का\s*)?नाम", line_lower):
+            father_label_index = i
+        
+        # Find DOB label
+        if 'date of birth' in line_lower or 'birth' in line_lower or 'जन्म' in line:
+            if dob_label_index == -1:
+                dob_label_index = i
+    
     # Process lines to find name and father's name
     for i, line in enumerate(lines):
         line_lower = line.lower()
@@ -479,7 +515,7 @@ def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
                     # Filter out common false positives
                     if potential_name and len(potential_name) > 2:
                         if not any(x in potential_name.lower() for x in ['father', 'signature', 'card', 'permanent', 'account']):
-                            name = potential_name.upper()
+                            name = clean_name_from_numbers(potential_name.upper())
                             break
             
             # Extract Hindi name from the line
@@ -490,45 +526,35 @@ def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
                 if cleaned_hindi and len(cleaned_hindi) > 2:
                     name_hindi = cleaned_hindi
             
-            # If not found inline, check next line
+            # If not found inline, check next line(s)
             if not name and i + 1 < len(lines):
                 next_line = extract_english_only(lines[i + 1]).strip()
+                next_line = clean_name_from_numbers(next_line)
                 if next_line and looks_like_name(next_line):
                     if 'father' not in next_line.lower():
                         name = next_line.upper()
         
         # Look for Father's Name - multiple patterns
-        # Handle: "पिता APPLICANTS FATHER NAME का नाम Father's Name" 
-        # or "Father's Name: VALUE"
-        elif ('father' in line_lower or 'पिता' in line):
-            # Extract all English words that could be the name
-            # The actual father's name usually comes BEFORE "का नाम" or "Father's Name" label
+        # Handle: "पिता का नाम/ Father s Name" (OCR often misses apostrophe)
+        # The name is usually on the NEXT line(s)
+        elif re.search(r"father'?s?\s+name|पिता\s*(का\s*)?नाम", line_lower):
+            # Try to extract inline value after the label
+            # Handle "Father s Name" (space instead of apostrophe)
+            father_inline_patterns = [
+                r"father'?s?\s+name\s*[:/]?\s*([A-Z][A-Z\s]+)",
+                r"पिता\s*का\s*नाम[ः:/]?\s*([A-Z][A-Z\s]+)",
+            ]
+            for pattern in father_inline_patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match:
+                    potential = match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    if potential and len(potential) > 2:
+                        if not any(x in potential.lower() for x in ['signature', 'card', 'date', 'birth', 's name']):
+                            father_name = potential.upper()
+                            break
             
-            # Pattern 1: Value before the Hindi label "का नाम" or "का नामः"
-            before_hindi_match = re.search(r'(?:पिता|father)[\'s]*\s+([A-Z][A-Z\s]+?)(?:\s*का\s*नाम[ः:]?|father|$)', line, re.IGNORECASE)
-            if before_hindi_match:
-                potential = before_hindi_match.group(1).strip()
-                if potential and len(potential) > 2:
-                    # Clean up - remove trailing "S" from "Father's" if captured
-                    potential = re.sub(r"^'?S\s+", '', potential)
-                    if looks_like_name(potential):
-                        father_name = potential.upper()
-            
-            # Pattern 2: Standard "Father's Name: VALUE" format
-            if not father_name:
-                father_patterns = [
-                    r"father'?s?\s*name\s*[:/]?\s*([A-Z][A-Z\s]+)",
-                ]
-                for pattern in father_patterns:
-                    match = re.search(pattern, line, re.IGNORECASE)
-                    if match:
-                        potential = match.group(1).strip()
-                        if potential and len(potential) > 2:
-                            if not any(x in potential.lower() for x in ['signature', 'card', 'date', 'birth']):
-                                father_name = potential.upper()
-                                break
-            
-            # Extract Hindi father's name
+            # Extract Hindi father's name from the line
             hindi_part = extract_hindi_only(line)
             if hindi_part and not father_name_hindi:
                 skip_hindi = ['पिता', 'का', 'नाम', 'भारत', 'सरकार']
@@ -536,12 +562,40 @@ def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
                 if cleaned_hindi and looks_like_hindi_name(cleaned_hindi):
                     father_name_hindi = cleaned_hindi
             
-            # Pattern 3: If we see the label, check next line
-            if not father_name and i + 1 < len(lines):
-                next_line = extract_english_only(lines[i + 1]).strip()
-                if next_line and looks_like_name(next_line):
-                    if 'date' not in next_line.lower() and 'birth' not in next_line.lower():
-                        father_name = next_line.upper()
+            # If not found inline, check next lines (name might be split across multiple lines)
+            if not father_name:
+                father_name_parts = []
+                # Look at next 2-3 lines for the father's name
+                for j in range(1, 4):
+                    if i + j >= len(lines):
+                        break
+                    next_line = lines[i + j].strip()
+                    next_line_lower = next_line.lower()
+                    
+                    # Stop if we hit another label or DOB
+                    if any(x in next_line_lower for x in ['date', 'birth', 'जन्म', 'signature', 'हस्ताक्षर']):
+                        break
+                    
+                    # Extract English portion
+                    english_part = extract_english_only(next_line)
+                    english_part = clean_name_from_numbers(english_part)
+                    
+                    if english_part and len(english_part) > 1:
+                        # Check if it looks like a name part
+                        if re.match(r'^[A-Z][A-Z\s]*$', english_part.upper()):
+                            father_name_parts.append(english_part.upper())
+                    
+                    # Also check for Hindi father's name
+                    if not father_name_hindi:
+                        hindi_part = extract_hindi_only(next_line)
+                        skip_hindi = ['पिता', 'का', 'नाम', 'भारत', 'सरकार', 'जन्म', 'तारीख']
+                        if hindi_part:
+                            cleaned_hindi = ' '.join(w for w in hindi_part.split() if w not in skip_hindi)
+                            if cleaned_hindi and looks_like_hindi_name(cleaned_hindi):
+                                father_name_hindi = cleaned_hindi
+                
+                if father_name_parts:
+                    father_name = ' '.join(father_name_parts)
         
         # Look for DOB
         elif 'date of birth' in line_lower or 'dob' in line_lower or 'birth' in line_lower or 'जन्म' in line:
@@ -566,139 +620,6 @@ def extract_pan(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
         info['father_name_hindi'] = father_name_hindi
     if dob:
         info['date_of_birth'] = dob
-    
-    return info
-
-
-# ==================== PASSPORT EXTRACTION ====================
-
-def extract_passport(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
-    """
-    Extract information from Indian Passport.
-    
-    Sample format:
-    - Type: P, Code: IND, Nationality: INDIAN
-    - Passport No.: Z0000000
-    - Surname: SPECIMEN
-    - Given Name: KUMAR G
-    - DOB: 24/05/1985, Sex: M
-    - Place of Birth, Place of Issue
-    - Date of Issue, Date of Expiry
-    - MRZ at bottom
-    """
-    info = {}
-    text_upper = text.upper()
-    text_clean = clean_text_for_matching(text)
-    
-    # Extract Passport Number
-    passport_match = PASSPORT_PATTERN.search(text_upper)
-    if passport_match:
-        info['document_id'] = passport_match.group(1)
-        info['passport_number'] = passport_match.group(1)
-    
-    # Try to extract from MRZ (Machine Readable Zone)
-    mrz_pattern = re.compile(r'P<<([A-Z]+)<<([A-Z\s]+)<+')
-    mrz_match = mrz_pattern.search(text_upper)
-    if mrz_match:
-        surname = mrz_match.group(1).replace('<', ' ').strip()
-        given_name = mrz_match.group(2).replace('<', ' ').strip()
-        info['name'] = f"{given_name} {surname}".strip()
-        info['surname'] = surname
-        info['given_name'] = given_name
-    
-    # Extract fields from text
-    surname = None
-    given_name = None
-    
-    for i, line in enumerate(lines):
-        line_lower = line.lower()
-        line_clean = clean_text_for_matching(line)
-        
-        # Passport Number
-        if 'passport no' in line_lower:
-            match = PASSPORT_PATTERN.search(line.upper())
-            if match:
-                info['document_id'] = match.group(1)
-                info['passport_number'] = match.group(1)
-        
-        # Surname
-        elif 'surname' in line_lower:
-            # Try inline extraction first
-            surname_match = re.search(r'surname\s*[:/]?\s*([A-Z][A-Z\s]*)', line, re.IGNORECASE)
-            if surname_match:
-                surname = surname_match.group(1).strip().upper()
-            elif i + 1 < len(lines):
-                next_line = extract_english_only(lines[i + 1]).strip()
-                if next_line and looks_like_name(next_line):
-                    surname = next_line.upper()
-        
-        # Given Name
-        elif 'given name' in line_lower:
-            given_match = re.search(r'given\s*name[s]?\s*[:/]?\s*([A-Z][A-Z\s]*)', line, re.IGNORECASE)
-            if given_match:
-                given_name = given_match.group(1).strip().upper()
-            elif i + 1 < len(lines):
-                next_line = extract_english_only(lines[i + 1]).strip()
-                if next_line and looks_like_name(next_line):
-                    given_name = next_line.upper()
-        
-        # Date of Birth
-        elif 'date of birth' in line_lower or '/date of birth' in line_lower:
-            date = extract_date(line_clean)
-            if date:
-                info['date_of_birth'] = date
-        
-        # Sex/Gender
-        elif 'sex' in line_lower:
-            sex_match = re.search(r'\b([MF])\b', line.upper())
-            if sex_match:
-                info['gender'] = 'Male' if sex_match.group(1) == 'M' else 'Female'
-        
-        # Place of Birth
-        elif 'place of birth' in line_lower:
-            pob_match = re.search(r'place\s*of\s*birth\s*[:/]?\s*([A-Z][A-Z\s,]+)', line, re.IGNORECASE)
-            if pob_match:
-                info['place_of_birth'] = pob_match.group(1).strip().upper()
-            elif i + 1 < len(lines):
-                next_line = extract_english_only(lines[i + 1]).strip()
-                if next_line:
-                    info['place_of_birth'] = next_line.upper()
-        
-        # Place of Issue
-        elif 'place of issue' in line_lower:
-            poi_match = re.search(r'place\s*of\s*issue\s*[:/]?\s*([A-Z][A-Z\s,]+)', line, re.IGNORECASE)
-            if poi_match:
-                info['place_of_issue'] = poi_match.group(1).strip().upper()
-            elif i + 1 < len(lines):
-                next_line = extract_english_only(lines[i + 1]).strip()
-                if next_line:
-                    info['place_of_issue'] = next_line.upper()
-        
-        # Date of Issue
-        elif 'date of issue' in line_lower:
-            date = extract_date(line_clean)
-            if date:
-                info['date_of_issue'] = date
-        
-        # Date of Expiry
-        elif 'date of expiry' in line_lower or 'expiry' in line_lower:
-            date = extract_date(line_clean)
-            if date:
-                info['date_of_expiry'] = date
-    
-    # Build full name if not from MRZ
-    if not info.get('name'):
-        if surname and given_name:
-            info['name'] = f"{given_name} {surname}"
-        elif surname:
-            info['name'] = surname
-        elif given_name:
-            info['name'] = given_name
-    
-    if surname:
-        info['surname'] = surname
-    if given_name:
-        info['given_name'] = given_name
     
     return info
 
@@ -850,6 +771,576 @@ def extract_voter_id(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
     return info
 
 
+# ==================== DRIVING LICENSE EXTRACTION ====================
+
+# Driving License pattern: State code (2 letters) + RTO code (2 digits) + Year (4 digits or 2 digits) + Number (7 digits)
+# Examples: MH12 20010149313, KA01 20201234567, DL1420190012345
+DRIVING_LICENSE_PATTERN = re.compile(r'\b([A-Z]{2}\s*\d{2}\s*\d{4,11})\b')
+
+
+def extract_driving_license(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
+    """
+    Extract information from Indian Driving Licence.
+    
+    Sample format:
+    - State Motor Driving Licence
+    - DL No: MH12 20010149313
+    - Name: NIVRUTTI BODAKE
+    - S/O or D/O: Father's name
+    - Address: Village/Town
+    - TAL: Taluka
+    - DIST: District
+    - DOB: Date of Birth
+    - Valid Till: Expiry date
+    """
+    info = {}
+    text_upper = text.upper()
+    text_clean = clean_text_for_matching(text)
+    
+    # ===== Extract DL Number =====
+    # Look for DL No pattern with various OCR variations
+    dl_patterns = [
+        r'DL[_\s]*(?:NO|N0)[.\s:]*([A-Z]{2}\s*\d{2}\s*\d{4,11})',
+        r'(?:DRIVING\s*)?(?:LICENCE|LICENSE)[.\s:]*(?:NO|N0)?[.\s:]*([A-Z]{2}\s*\d{2}\s*\d{4,11})',
+        r'\b([A-Z]{2}\s*\d{2}\s*\d{9,11})\b',  # Standard DL format
+        r'\b(MH\d{2}\s*\d{8,11})\b',  # Maharashtra specific
+        r'\b(KA\d{2}\s*\d{8,11})\b',  # Karnataka specific
+        r'\b(DL\d{2}\s*\d{8,11})\b',  # Delhi specific
+    ]
+    
+    dl_number = None
+    for pattern in dl_patterns:
+        match = re.search(pattern, text_upper)
+        if match:
+            dl_number = match.group(1).replace(' ', '')
+            break
+    
+    if dl_number:
+        info['document_id'] = dl_number
+        info['dl_number'] = dl_number
+    
+    # ===== Extract Name and Father's Name =====
+    name = None
+    father_name = None
+    
+    # Process line by line for better accuracy
+    for i, line in enumerate(lines):
+        line_upper = line.upper().strip()
+        line_lower = line.lower().strip()
+        
+        # Skip header lines without name field
+        if any(x in line_lower for x in ['motor', 'driving', 'licence', 'license', 'union of india', 'maharashtra state', 'karnataka']):
+            if 'name' not in line_lower:
+                continue
+        
+        # === CASE 1: Line has BOTH "Name" and "S/O" pattern (merged OCR) ===
+        has_name = 'name' in line_lower
+        has_so = bool(re.search(r'sdan|s[/\s]*o\b|d[/\s]*o\b|son\s*of|daughter', line_lower))
+        
+        if has_name and has_so:
+            # Extract name - between "Name:" and S/O pattern
+            name_match = re.search(r'NAME\s*[:\s]+([A-Z][A-Z\s]+?)(?=SDAN|S\s*/?\s*O|D\s*/?\s*O|SON|DAUGHTER)', line_upper)
+            if name_match and not name:
+                potential = name_match.group(1).strip()
+                potential = clean_name_from_numbers(potential)
+                if potential and len(potential) > 2:
+                    name = potential
+            
+            # Extract father's name - after S/O pattern
+            father_match = re.search(r'(?:SDAN|S\s*/?\s*O|D\s*/?\s*O|SON|DAUGHTER)\s*(?:OF)?[:\s]*([A-Z][A-Z\s]+)', line_upper)
+            if father_match and not father_name:
+                potential = father_match.group(1).strip()
+                potential = clean_name_from_numbers(potential)
+                potential = re.sub(r'\s*(ADD|TAL|DIST|DOB|AP).*$', '', potential, flags=re.IGNORECASE).strip()
+                if potential and len(potential) > 2:
+                    father_name = potential
+            continue
+        
+        # === CASE 2: Line has only "Name:" (standalone) ===
+        if has_name and not has_so:
+            # Multiple patterns to extract name (use IGNORECASE for flexibility)
+            name_patterns = [
+                r'NAME\s*[:\s]+([A-Z][A-Z\s]+)',
+                r'NAME\s*[:]+\s*([A-Z][A-Z\s]+)',
+                r'NAME\s*:\s*([A-Z][A-Z\s]+)',
+            ]
+            for pattern in name_patterns:
+                name_match = re.search(pattern, line_upper)
+                if name_match and not name:
+                    potential = name_match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    # Remove any trailing S/O text that might have been captured
+                    potential = re.sub(r'(SDAN|S\s*/?\s*O|D\s*/?\s*O|SON|DAUGHTER).*$', '', potential, flags=re.IGNORECASE).strip()
+                    if potential and len(potential) > 2:
+                        name = potential
+                        break
+            
+            # If still no name, check next line
+            if not name and i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                next_upper = next_line.upper()
+                # Make sure next line doesn't start with S/O pattern
+                if not re.search(r'^(SDAN|S\s*/?\s*O|D\s*/?\s*O|SON|DAUGHTER)', next_upper):
+                    next_english = extract_english_only(next_line).strip().upper()
+                    next_english = clean_name_from_numbers(next_english)
+                    if next_english and len(next_english) > 2:
+                        name = next_english
+        
+        # === CASE 3: Line has S/O pattern (father's name) ===
+        elif has_so and not has_name:
+            father_patterns = [
+                r'(?:SDAN|S\s*/?\s*O|D\s*/?\s*O)\s*(?:OF|Of)?[:\s]*([A-Z][A-Z\s]+)',
+                r'(?:SON|DAUGHTER)\s*(?:OF|Of)?[:\s]*([A-Z][A-Z\s]+)',
+            ]
+            for pattern in father_patterns:
+                father_match = re.search(pattern, line_upper)
+                if father_match and not father_name:
+                    potential = father_match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    potential = re.sub(r'\s*(ADD|TAL|DIST|DOB|AP|ADDRESS).*$', '', potential, flags=re.IGNORECASE).strip()
+                    if potential and len(potential) > 2:
+                        father_name = potential
+                        break
+            
+            # If no father name found inline, check next line
+            if not father_name and i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                next_english = extract_english_only(next_line).strip().upper()
+                next_english = clean_name_from_numbers(next_english)
+                # Make sure it's not an address field
+                if next_english and len(next_english) > 2 and not re.search(r'^(ADD|TAL|DIST|AP)', next_english):
+                    father_name = next_english
+        
+        # Look for Address fields
+        # Address pattern: "Add" or "Address"
+        if re.search(r'\b(?:add|address)\b', line_lower):
+            addr_match = re.search(r'(?:add(?:ress)?)[:\s]+(.+)', line, re.IGNORECASE)
+            if addr_match:
+                addr = addr_match.group(1).strip()
+                addr = extract_english_only(addr)
+                if addr and len(addr) > 2:
+                    info['address'] = addr
+        
+        # Look for Taluka (TAL)
+        if re.search(r'\btal\b', line_lower):
+            tal_match = re.search(r'tal[:\s]+([A-Za-z]+)', line, re.IGNORECASE)
+            if tal_match:
+                info['taluka'] = tal_match.group(1).strip().upper()
+        
+        # Look for District (DIST)
+        if re.search(r'\bdis(?:t|tr)?\b', line_lower):
+            dist_match = re.search(r'dis(?:t|tr)?[:\s]+([A-Za-z]+)', line, re.IGNORECASE)
+            if dist_match:
+                info['district'] = dist_match.group(1).strip().upper()
+        
+        # Look for DOB (Date of Birth) - various OCR patterns
+        if re.search(r'\b(?:dob|doe|d\.o\.b|date\s*of\s*birth|b\.?c)\b', line_lower):
+            line_for_date = clean_text_for_matching(line)
+            date = extract_date(line_for_date)
+            if date:
+                info['date_of_birth'] = date
+        
+        # Look for Valid Till / Expiry
+        if re.search(r'\b(?:valid|expir|till)\b', line_lower):
+            line_for_date = clean_text_for_matching(line)
+            date = extract_date(line_for_date)
+            if date:
+                info['valid_till'] = date
+        
+        # Look for Issue Date
+        if re.search(r'\b(?:issue|doi|dld)\b', line_lower):
+            line_for_date = clean_text_for_matching(line)
+            date = extract_date(line_for_date)
+            if date:
+                info['date_of_issue'] = date
+    
+    # Store extracted names
+    if name:
+        info['name'] = name
+    if father_name:
+        info['father_name'] = father_name
+    
+    # Build full address if we have components
+    address_parts = []
+    if info.get('address'):
+        address_parts.append(info['address'])
+    if info.get('taluka'):
+        address_parts.append(f"Tal: {info['taluka']}")
+    if info.get('district'):
+        address_parts.append(f"Dist: {info['district']}")
+    
+    if len(address_parts) > 1:
+        info['full_address'] = ', '.join(address_parts)
+    
+    return info
+
+
+# ==================== HANDWRITTEN FORM EXTRACTION ====================
+
+def extract_handwritten(text: str, lines: List[str]) -> Dict[str, Optional[str]]:
+    """
+    Extract information from handwritten forms.
+    
+    Looks for common form fields:
+    - First Name, Middle Name, Surname/Last Name
+    - Full Name
+    - Father's Name, Mother's Name
+    - Date of Birth / DOB
+    - Address, City, State, PIN Code
+    - Gender / Sex
+    - Mobile / Phone
+    - Email
+    - Age, Occupation, etc.
+    """
+    info = {}
+    text_lower = text.lower()
+    text_clean = clean_text_for_matching(text)
+    
+    # Track found values to avoid duplicates
+    first_name = None
+    middle_name = None
+    surname = None
+    full_name = None
+    father_name = None
+    mother_name = None
+    dob = None
+    address_parts = []
+    city = None
+    state = None
+    pin_code = None
+    gender = None
+    mobile = None
+    email = None
+    age = None
+    occupation = None
+    
+    # Process line by line
+    for i, line in enumerate(lines):
+        line_lower = line.lower().strip()
+        line_upper = line.upper().strip()
+        line_clean = clean_text_for_matching(line)
+        
+        # ===== Extract First Name =====
+        if re.search(r'\b(?:first\s*name|fname)\b', line_lower):
+            # Try to find value after the label
+            patterns = [
+                r'(?:first\s*name|fname)\s*[:\-]?\s*([A-Za-z]+)',
+                r'(?:first\s*name|fname)\s*[:\-]?\s*$',  # Label only on this line
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.lastindex and match.group(1):
+                    potential = match.group(1).strip()
+                    if potential and len(potential) > 1:
+                        first_name = potential.upper()
+                        break
+            
+            # Check next line if label is alone
+            if not first_name and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1 and looks_like_name(next_line):
+                    first_name = next_line.upper()
+        
+        # ===== Extract Middle Name =====
+        elif re.search(r'\b(?:middle\s*name|mname)\b', line_lower):
+            patterns = [
+                r'(?:middle\s*name|mname)\s*[:\-]?\s*([A-Za-z]+)',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.lastindex and match.group(1):
+                    potential = match.group(1).strip()
+                    if potential and len(potential) > 1:
+                        middle_name = potential.upper()
+                        break
+            
+            if not middle_name and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1 and looks_like_name(next_line):
+                    middle_name = next_line.upper()
+        
+        # ===== Extract Surname / Last Name =====
+        elif re.search(r'\b(?:surname|sur\s*name|last\s*name|lname|family\s*name)\b', line_lower):
+            patterns = [
+                r'(?:surname|sur\s*name|last\s*name|lname|family\s*name)\s*[:\-]?\s*([A-Za-z]+)',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.lastindex and match.group(1):
+                    potential = match.group(1).strip()
+                    if potential and len(potential) > 1:
+                        surname = potential.upper()
+                        break
+            
+            if not surname and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1 and looks_like_name(next_line):
+                    surname = next_line.upper()
+        
+        # ===== Extract Full Name (when not split into first/middle/last) =====
+        elif re.search(r'\b(?:full\s*name|name|applicant\s*name)\b', line_lower) and not re.search(r'\b(?:first|middle|last|surname|father|mother)\b', line_lower):
+            patterns = [
+                r'(?:full\s*name|(?<!first\s)(?<!middle\s)(?<!last\s)name|applicant\s*name)\s*[:\-]?\s*([A-Za-z][A-Za-z\s]+)',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.group(1):
+                    potential = match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    if potential and len(potential) > 2 and looks_like_name(potential):
+                        full_name = potential.upper()
+                        break
+            
+            if not full_name and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                next_line = clean_name_from_numbers(next_line)
+                if next_line and len(next_line) > 2 and looks_like_name(next_line):
+                    full_name = next_line.upper()
+        
+        # ===== Extract Father's Name =====
+        elif re.search(r"\b(?:father'?s?\s*name|f/?name|father)\b", line_lower) and 'grand' not in line_lower:
+            patterns = [
+                r"(?:father'?s?\s*name|f/?name)\s*[:\-]?\s*([A-Za-z][A-Za-z\s]+)",
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.group(1):
+                    potential = match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    if potential and len(potential) > 2 and looks_like_name(potential):
+                        father_name = potential.upper()
+                        break
+            
+            if not father_name and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                next_line = clean_name_from_numbers(next_line)
+                if next_line and len(next_line) > 2 and looks_like_name(next_line):
+                    father_name = next_line.upper()
+        
+        # ===== Extract Mother's Name =====
+        elif re.search(r"\b(?:mother'?s?\s*name|m/?name|mother)\b", line_lower):
+            patterns = [
+                r"(?:mother'?s?\s*name|m/?name)\s*[:\-]?\s*([A-Za-z][A-Za-z\s]+)",
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, line, re.IGNORECASE)
+                if match and match.group(1):
+                    potential = match.group(1).strip()
+                    potential = clean_name_from_numbers(potential)
+                    if potential and len(potential) > 2 and looks_like_name(potential):
+                        mother_name = potential.upper()
+                        break
+            
+            if not mother_name and i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                next_line = clean_name_from_numbers(next_line)
+                if next_line and len(next_line) > 2 and looks_like_name(next_line):
+                    mother_name = next_line.upper()
+        
+        # ===== Extract Date of Birth =====
+        elif re.search(r'\b(?:d\.?o\.?b|date\s*of\s*birth|birth\s*date|dob)\b', line_lower):
+            date = extract_date(line_clean)
+            if date:
+                dob = date
+            elif i + 1 < len(lines):
+                date = extract_date(clean_text_for_matching(lines[i + 1]))
+                if date:
+                    dob = date
+        
+        # ===== Extract Age =====
+        elif re.search(r'\bage\b', line_lower):
+            age_match = re.search(r'age\s*[:\-]?\s*(\d{1,3})', line, re.IGNORECASE)
+            if age_match:
+                potential_age = int(age_match.group(1))
+                if 0 < potential_age < 150:
+                    age = str(potential_age)
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                age_match = re.search(r'^(\d{1,3})$', next_line)
+                if age_match:
+                    potential_age = int(age_match.group(1))
+                    if 0 < potential_age < 150:
+                        age = str(potential_age)
+        
+        # ===== Extract Gender =====
+        elif re.search(r'\b(?:gender|sex)\b', line_lower):
+            if re.search(r'\bfemale\b', line_lower):
+                gender = 'Female'
+            elif re.search(r'\bmale\b', line_lower):
+                gender = 'Male'
+            elif re.search(r'\bother\b', line_lower):
+                gender = 'Other'
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1].strip().lower()
+                if 'female' in next_line:
+                    gender = 'Female'
+                elif 'male' in next_line:
+                    gender = 'Male'
+                elif 'other' in next_line:
+                    gender = 'Other'
+        
+        # ===== Extract Address =====
+        elif re.search(r'\b(?:address|addr|residence)\b', line_lower) and 'email' not in line_lower:
+            addr_match = re.search(r'(?:address|addr|residence)\s*[:\-]?\s*(.+)', line, re.IGNORECASE)
+            if addr_match:
+                addr_text = addr_match.group(1).strip()
+                if addr_text and len(addr_text) > 2:
+                    address_parts.append(addr_text)
+            # Also check next few lines for address continuation
+            for j in range(1, 4):
+                if i + j < len(lines):
+                    next_line = lines[i + j].strip()
+                    # Stop if we hit another field label
+                    if re.search(r'(?:city|state|pin|mobile|phone|email|gender|name|dob)', next_line.lower()):
+                        break
+                    if next_line and len(next_line) > 2:
+                        address_parts.append(next_line)
+        
+        # ===== Extract City =====
+        elif re.search(r'\b(?:city|town|village)\b', line_lower):
+            city_match = re.search(r'(?:city|town|village)\s*[:\-]?\s*([A-Za-z\s]+)', line, re.IGNORECASE)
+            if city_match:
+                potential = city_match.group(1).strip()
+                if potential and len(potential) > 1:
+                    city = potential.upper()
+            elif i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1:
+                    city = next_line.upper()
+        
+        # ===== Extract State =====
+        elif re.search(r'\bstate\b', line_lower) and 'marital' not in line_lower:
+            state_match = re.search(r'state\s*[:\-]?\s*([A-Za-z\s]+)', line, re.IGNORECASE)
+            if state_match:
+                potential = state_match.group(1).strip()
+                if potential and len(potential) > 1:
+                    state = potential.upper()
+            elif i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1:
+                    state = next_line.upper()
+        
+        # ===== Extract PIN Code =====
+        elif re.search(r'\b(?:pin\s*code|pincode|postal\s*code|zip)\b', line_lower):
+            pin_match = re.search(r'(\d{6})', line)
+            if pin_match:
+                pin_code = pin_match.group(1)
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                pin_match = re.search(r'(\d{6})', next_line)
+                if pin_match:
+                    pin_code = pin_match.group(1)
+        
+        # ===== Extract Mobile/Phone =====
+        elif re.search(r'\b(?:mobile|phone|contact|tel)\b', line_lower):
+            mobile_match = MOBILE_PATTERN.search(line)
+            if mobile_match:
+                mobile = mobile_match.group(1)
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                mobile_match = MOBILE_PATTERN.search(next_line)
+                if mobile_match:
+                    mobile = mobile_match.group(1)
+        
+        # ===== Extract Email =====
+        elif re.search(r'\bemail\b', line_lower):
+            email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', line)
+            if email_match:
+                email = email_match.group(0).lower()
+            elif i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', next_line)
+                if email_match:
+                    email = email_match.group(0).lower()
+        
+        # ===== Extract Occupation =====
+        elif re.search(r'\b(?:occupation|profession|job)\b', line_lower):
+            occ_match = re.search(r'(?:occupation|profession|job)\s*[:\-]?\s*([A-Za-z\s]+)', line, re.IGNORECASE)
+            if occ_match:
+                potential = occ_match.group(1).strip()
+                if potential and len(potential) > 1:
+                    occupation = potential.upper()
+            elif i + 1 < len(lines):
+                next_line = extract_english_only(lines[i + 1]).strip()
+                if next_line and len(next_line) > 1:
+                    occupation = next_line.upper()
+    
+    # ===== Build output dictionary =====
+    
+    # Construct full name from parts if available
+    if first_name or middle_name or surname:
+        name_parts = []
+        if first_name:
+            name_parts.append(first_name)
+            info['first_name'] = first_name
+        if middle_name:
+            name_parts.append(middle_name)
+            info['middle_name'] = middle_name
+        if surname:
+            name_parts.append(surname)
+            info['surname'] = surname
+        
+        # Create combined name
+        if name_parts:
+            info['name'] = ' '.join(name_parts)
+    elif full_name:
+        info['name'] = full_name
+        # Try to split full name into parts
+        name_words = full_name.split()
+        if len(name_words) >= 3:
+            info['first_name'] = name_words[0]
+            info['middle_name'] = ' '.join(name_words[1:-1])
+            info['surname'] = name_words[-1]
+        elif len(name_words) == 2:
+            info['first_name'] = name_words[0]
+            info['surname'] = name_words[1]
+        elif len(name_words) == 1:
+            info['first_name'] = name_words[0]
+    
+    if father_name:
+        info['father_name'] = father_name
+    
+    if mother_name:
+        info['mother_name'] = mother_name
+    
+    if dob:
+        info['date_of_birth'] = dob
+    
+    if age:
+        info['age'] = age
+    
+    if gender:
+        info['gender'] = gender
+    
+    # Build address
+    if address_parts:
+        full_address = ', '.join(address_parts)
+        info['address'] = full_address
+    
+    if city:
+        info['city'] = city
+    
+    if state:
+        info['state'] = state
+    
+    if pin_code:
+        info['pin_code'] = pin_code
+    
+    if mobile:
+        info['mobile'] = mobile
+    
+    if email:
+        info['email'] = email
+    
+    if occupation:
+        info['occupation'] = occupation
+    
+    # Set document type indicator
+    info['document_type'] = 'Handwritten Form'
+    
+    return info
+
+
 # ==================== MAIN EXTRACTION FUNCTION ====================
 
 def extract_document_info(text: str, doc_type: str) -> Dict[str, Optional[str]]:
@@ -858,7 +1349,7 @@ def extract_document_info(text: str, doc_type: str) -> Dict[str, Optional[str]]:
     
     Args:
         text: OCR extracted text
-        doc_type: Document type (AADHAAR, PAN, PASSPORT, etc.)
+        doc_type: Document type (AADHAAR, PAN, VOTER_ID, etc.)
     
     Returns:
         Dictionary with extracted fields
@@ -871,10 +1362,12 @@ def extract_document_info(text: str, doc_type: str) -> Dict[str, Optional[str]]:
         return extract_aadhaar(text, lines)
     elif doc_type == "PAN":
         return extract_pan(text, lines)
-    elif doc_type == "PASSPORT":
-        return extract_passport(text, lines)
     elif doc_type == "VOTER_ID":
         return extract_voter_id(text, lines)
+    elif doc_type == "DRIVING_LICENSE":
+        return extract_driving_license(text, lines)
+    elif doc_type == "HANDWRITTEN":
+        return extract_handwritten(text, lines)
     else:
         # Generic extraction for other document types
         info = {}
@@ -885,13 +1378,17 @@ def extract_document_info(text: str, doc_type: str) -> Dict[str, Optional[str]]:
         if pan_match:
             info['document_id'] = pan_match.group(1)
         
-        passport_match = PASSPORT_PATTERN.search(text.upper())
-        if passport_match:
-            info['document_id'] = passport_match.group(1)
-        
         aadhaar_match = AADHAAR_PATTERN.search(text_clean)
         if aadhaar_match:
             info['document_id'] = aadhaar_match.group(1).replace(' ', '')
+        
+        voter_id_match = VOTER_ID_PATTERN.search(text.upper())
+        if voter_id_match:
+            info['document_id'] = voter_id_match.group(1)
+        
+        dl_match = DRIVING_LICENSE_PATTERN.search(text.upper())
+        if dl_match:
+            info['document_id'] = dl_match.group(1).replace(' ', '')
         
         # Find dates
         date = extract_date(text_clean)

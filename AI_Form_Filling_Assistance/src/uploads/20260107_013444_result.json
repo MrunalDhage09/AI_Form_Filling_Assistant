@@ -1,0 +1,19 @@
+{
+  "filename": "test.jpg",
+  "upload_timestamp": "20260107_013444",
+  "document_type": "DRIVING_LICENSE",
+  "classification_confidence": 0.18,
+  "extraction_method": "easyocr",
+  "extracted_text": "THEUNION O= INDIA\nMAHARASHTRA STATEMOTOR DRIVING LICENCE\nDL_ No :iH12 20010149313 DC 14-05-2001\nHत्यमत नस  valid Till 13-05-2021 (NT)\nDLD   29406-2016 FORh 7\nRUDE १६ (\nAUTHORSATION TO DRIVE FOLLOMNG CLASS\nOF EHICLES TROUGHOUT INDIA\nCO / DOl\nICnG 14-05-2001\nLHiy 14-05-2001\nDOE 0545-1979 B८\nName :NIVRUTTI BODAKE\nSDAN Of:KRUSHNA\nAdd AP: MAZGAON\nTAL: BHOR,\nDisr:Pun=.\n2i) 6><<\nSignature &Dor Signature Thumo\nIssuing Authorit :   MH12 २016502 Impression D Hoider",
+  "extracted_fields": {
+    "document_id": "IH1220010149313",
+    "dl_number": "IH1220010149313",
+    "valid_till": "13/05/2021",
+    "address": "AP MAZGAON",
+    "taluka": "BHOR",
+    "name": "NIVRUTTI BODAKE",
+    "father_name": "KRUSHNA",
+    "full_address": "AP MAZGAON, Tal BHOR"
+  },
+  "status": "success"
+}

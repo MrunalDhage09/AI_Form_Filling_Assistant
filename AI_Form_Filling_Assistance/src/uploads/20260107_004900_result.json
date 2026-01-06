@@ -1,0 +1,16 @@
+{
+  "filename": "1000054573.jpg",
+  "upload_timestamp": "20260107_004900",
+  "document_type": "PAN",
+  "classification_confidence": 0.6,
+  "extraction_method": "easyocr",
+  "extracted_text": "विभाग\nआयकर\nभारत\nसरकार\nINCOME TAX DEPARTMENT GOVT OF INDIA\nणपर\nस्थायी लेखा संख्या कार्ड\nPermanent Account Number Card\nDNCPA6823D\nनाम/ Name\nRAM CHANDRASHEKHAR AHERKAR\nपिता का नाम/ Father s Name\nCHANDRASHEKHAR MANIKRAO 09112019\nAHERKAR\nजन्म की तारीख Q४\nOate of Birth\n13/07/2001 हस्ताक्षर / Signature\n8",
+  "extracted_fields": {
+    "document_id": "DNCPA6823D",
+    "pan_number": "DNCPA6823D",
+    "name": "RAM CHANDRASHEKHAR AHERKAR",
+    "father_name": "CHANDRASHEKHAR MANIKRAO AHERKAR",
+    "date_of_birth": "13/07/2001"
+  },
+  "status": "success"
+}

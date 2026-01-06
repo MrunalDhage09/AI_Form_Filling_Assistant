@@ -820,6 +820,177 @@
                         </div>
                     </div>
                     {% endif %}
+                    
+                    {% if result.extracted_fields.dl_number %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🚗</span>
+                            <span>DL Number</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="dl_number" name="dl_number" value="{{ result.extracted_fields.dl_number }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('dl_number', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.valid_till %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📅</span>
+                            <span>Valid Till</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="valid_till" name="valid_till" value="{{ result.extracted_fields.valid_till }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('valid_till', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.taluka %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>📍</span>
+                            <span>Taluka</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="taluka" name="taluka" value="{{ result.extracted_fields.taluka }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('taluka', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.district %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🏛️</span>
+                            <span>District</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="district" name="district" value="{{ result.extracted_fields.district }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('district', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.full_address %}
+                    <div class="field field-full">
+                        <div class="field-label">
+                            <span>🗺️</span>
+                            <span>Full Address</span>
+                        </div>
+                        <div class="field-input-group">
+                            <textarea class="field-input" id="full_address" name="full_address" rows="2">{{ result.extracted_fields.full_address }}</textarea>
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('full_address', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {# === HANDWRITTEN FORM FIELDS === #}
+                    
+                    {% if result.extracted_fields.first_name %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👤</span>
+                            <span>First Name</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="first_name" name="first_name" value="{{ result.extracted_fields.first_name }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('first_name', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.middle_name %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👤</span>
+                            <span>Middle Name</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="middle_name" name="middle_name" value="{{ result.extracted_fields.middle_name }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('middle_name', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.surname %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👤</span>
+                            <span>Surname</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="surname" name="surname" value="{{ result.extracted_fields.surname }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('surname', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.mother_name %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>👩</span>
+                            <span>Mother's Name</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="mother_name" name="mother_name" value="{{ result.extracted_fields.mother_name }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('mother_name', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.age %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🔢</span>
+                            <span>Age</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="age" name="age" value="{{ result.extracted_fields.age }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('age', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.city %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🏙️</span>
+                            <span>City</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="city" name="city" value="{{ result.extracted_fields.city }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('city', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.state %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>🗺️</span>
+                            <span>State</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="state" name="state" value="{{ result.extracted_fields.state }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('state', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if result.extracted_fields.occupation %}
+                    <div class="field">
+                        <div class="field-label">
+                            <span>💼</span>
+                            <span>Occupation</span>
+                        </div>
+                        <div class="field-input-group">
+                            <input type="text" class="field-input" id="occupation" name="occupation" value="{{ result.extracted_fields.occupation }}">
+                            <button type="button" class="voice-btn" onclick="startVoiceInput('occupation', 'en-IN')" title="Voice Input">🎤</button>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </form>
             {% else %}

@@ -1,0 +1,12 @@
+{
+  "filename": "indianpp.jpg",
+  "upload_timestamp": "20260107_011436",
+  "document_type": "UNKNOWN",
+  "classification_confidence": 0.0,
+  "extraction_method": "easyocr",
+  "extracted_text": "भारत गणराज्य REPUBLIC OFINDIA\nटाईप / Type फड / Code शरीयता / Natonallty maपोट न / Passport No\nIND भारतीय INDIAN z0000000\nउपनान / Swname\nSPEC LMEN\nदिया गयानाभ / Given Namets\nKUMAR 6\nजनम्तिथि Date ol Buro लिंग 3ex\n24/05/1985 M\nजननस्थान/ Faceiot Birtn\nMUMBA L , MAHARASHTRA\nजारी करने का स्थान / Place or Issue\nAl. oQ४AA BANGALORE\nजारी करने की तिथि/ Date of Issue समाप्ति की तिथि / Date of Expiry\n01/01/2013 01/01/2023\nP<<SPEC LMEN<<KUMAR<G<<<<<<<<<<<<<<<<<<<<<<<<\n19999999<0110850524612300000<<<<<<<<<<<<<<<4",
+  "extracted_fields": {
+    "date_of_birth": "24/05/1985"
+  },
+  "status": "success"
+}

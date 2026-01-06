@@ -6,6 +6,7 @@ Uses EasyOCR (free, open-source) for text extraction.
 import os
 import sys
 import json
+import re
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
@@ -51,6 +52,47 @@ app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def sanitize_text(text: str) -> str:
+    """
+    Sanitize text to only allow alphanumeric characters, spaces, 
+    comma (,), period (.), forward slash (/), and Hindi/Devanagari characters.
+    Removes all other special symbols.
+    """
+    if not text:
+        return text
+    
+    # Pattern allows:
+    # - a-zA-Z0-9: English alphanumeric
+    # - \s: whitespace (spaces, tabs, newlines)
+    # - ,./: comma, period, forward slash
+    # - \u0900-\u097F: Hindi/Devanagari characters
+    # - -: hyphen (useful for dates like DD-MM-YYYY)
+    sanitized = re.sub(r'[^a-zA-Z0-9\s,./\u0900-\u097F-]', '', text)
+    
+    # Normalize multiple spaces to single space
+    sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+    
+    return sanitized
+
+
+def sanitize_extracted_fields(fields: dict) -> dict:
+    """
+    Sanitize all extracted fields to remove unwanted special characters.
+    Only keeps alphanumeric, spaces, comma, period, and forward slash.
+    """
+    if not fields:
+        return fields
+    
+    sanitized = {}
+    for key, value in fields.items():
+        if isinstance(value, str):
+            sanitized[key] = sanitize_text(value)
+        else:
+            sanitized[key] = value
+    
+    return sanitized
 
 
 def process_document(file_path: str, filename: str):
@@ -119,6 +161,9 @@ def analyze_document():
                 return render_template("error.html", 
                     message=f"Document processing timed out after {PROCESSING_TIMEOUT} seconds. Please try with a clearer or smaller image."), 408
         
+        # Sanitize extracted fields to remove unwanted special characters
+        sanitized_fields = sanitize_extracted_fields(processing_result["extracted_info"])
+        
         # Prepare result
         result = {
             "filename": filename,
@@ -127,7 +172,7 @@ def analyze_document():
             "classification_confidence": round(processing_result["confidence"], 2),
             "extraction_method": "easyocr",
             "extracted_text": processing_result["extracted_text"][:3000] if len(processing_result["extracted_text"]) > 3000 else processing_result["extracted_text"],
-            "extracted_fields": processing_result["extracted_info"],
+            "extracted_fields": sanitized_fields,
             "status": "success"
         }
         
@@ -190,6 +235,9 @@ def view_result(result_filename):
     
     try:
         result = json.loads(result_path.read_text(encoding='utf-8'))
+        # Sanitize extracted fields for display
+        if 'extracted_fields' in result:
+            result['extracted_fields'] = sanitize_extracted_fields(result['extracted_fields'])
         return render_template("result.html", result=result)
     except Exception as e:
         return render_template("error.html", message=f"Error: {str(e)}"), 500
@@ -246,12 +294,28 @@ def translate_text():
 
         translator = Translator()
         translated = {}
+        
+        # Fields that should NEVER be translated (always keep in English)
+        # document_id contains ID numbers (Aadhaar, PAN, Voter ID, DL)
+        # date fields contain dates in DD/MM/YYYY format
+        NO_TRANSLATE_FIELDS = {
+            'document_id', 'aadhaar_number', 'pan_number', 
+            'voter_id', 'vid', 'enrollment_no', 'mobile', 'pin_code', 'email',
+            'date_of_birth', 'date_of_issue', 'date_of_expiry',
+            'dl_number', 'valid_till', 'age'
+        }
 
         # translate each field individually
         for key, text in fields.items():
             if not text:
                 translated[key] = text
                 continue
+            
+            # Skip translation for document IDs and dates - always keep in English
+            if key in NO_TRANSLATE_FIELDS:
+                translated[key] = text
+                continue
+                
             try:
                 res = translator.translate(text, dest=target)
                 translated[key] = res.text
