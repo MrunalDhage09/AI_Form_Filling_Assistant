@@ -1,0 +1,12 @@
+{
+  "filename": "DrivingLicence.jpg",
+  "upload_timestamp": "20260106_215559",
+  "document_type": "PASSPORT",
+  "classification_confidence": 0.05,
+  "extraction_method": "easyocr",
+  "extracted_text": "Indian Union Driving Licence\nIssued by Government of Maharashtra MH\nMH14 20230035882\n&\nIssue Date Validity(NT) Validity(TR)\n03-08-2023 01-04-2045 8\n8\ng\nNameः SAURABH RAJENDRA KSHIRSAGAR\nHolder s Signature =\nDate of Birth: 02-04-2005 Blood Group: B+ Organ Donor: N ठ\nSon Daughter / Wife ofः RAJENDRA KSHIRSAGAR 8\nAddressः\nnean paranjape school,talegaon station ravikiran Talegaon Dabhade (r) Pune\nManarashtra 4१०५०७",
+  "extracted_fields": {
+    "date_of_birth": "02/04/2005"
+  },
+  "status": "success"
+}

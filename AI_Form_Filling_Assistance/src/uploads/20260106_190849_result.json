@@ -1,0 +1,22 @@
+{
+  "filename": "9b8c53a4c660466386cbe0992178b211.jpeg",
+  "upload_timestamp": "20260106_190849",
+  "document_type": "AADHAAR",
+  "classification_confidence": 0.47,
+  "extraction_method": "easyocr",
+  "extracted_text": "आधार\nणा% ~ 001001\nआारतीय बिशिष्द ओळख \"lकरण\nभारत सरकार\nUlpiaue Identification Authoritv Of India\nGovernment of India\nनोंदणी क्रमांकः / Enrolment No. : 0636/00520/07859\n8 To चंद्रशखर अहेरकर\nRam Chandrashekhar Aherkar शम\n0 suphal krupa housing society, malkapur Shritam\n? ७ear samioy provision\nPkola\nढ्लै Akola Akolo Mallorashtra 444001\n,80872^3629\n8 Vulidt फ40101\"0\np 9\n8\nड्लै ड\nडूँ\nआपता आधार क्रमांक Your Aadhaar No.\n6713 3842 5045\nVID 9120 3595 3405 8780\nमाझे आधार, माझी ओळख\nभारत सरकार\nGovernment of India\nराग चंद्रशेखर अहरकर\nRam Cnanorasnekhar Anerkar\nजन्न ताराख DOB: 1 ३/07/००1\nपुरुष/ MALE\n6713 3842 5045\nV|0: 9120 3595 3405 8780\nमाझे आधार माझी ओळख",
+  "extracted_fields": {
+    "document_id": "671338425045",
+    "aadhaar_number": "671338425045",
+    "vid": "9120359534058780",
+    "enrollment_no": "0636/00520/07859",
+    "name": "Ram Chandrashekhar Aherkar",
+    "name_hindi": "णा",
+    "pin_code": "444001",
+    "address": "Ulpiaue Identification Authoritv Of India, 8 To, 0 suphal krupa housing society, malkapur Shritam, ? ear samioy provision, Pkola, Akola Akolo Mallorashtra 444001",
+    "address_hindi": "चंद्रशखर अहेरकर, ढ्लै",
+    "gender": "Male",
+    "gender_hindi": "पुरुष"
+  },
+  "status": "success"
+}

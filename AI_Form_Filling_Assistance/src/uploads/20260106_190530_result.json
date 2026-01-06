@@ -1,0 +1,20 @@
+{
+  "filename": "AdharCard.jpeg",
+  "upload_timestamp": "20260106_190530",
+  "document_type": "AADHAAR",
+  "classification_confidence": 0.26,
+  "extraction_method": "easyocr",
+  "extracted_text": "भारत सरकार\nGovernment of India आधार\nमृणाल राजेश ढगे\nह्ै Mrunal Rajesh Dhage\nजन्म तारीख/D0B: ३०/09/२००५\nमहिला| FEMALE\n8\n्लँ\n4653 6807 9680\n9153 3069 1406 5341\nVID .\nमाझी ओळख\nमाझे आधार",
+  "extracted_fields": {
+    "document_id": "465368079680",
+    "aadhaar_number": "465368079680",
+    "name": "Mrunal Rajesh Dhage",
+    "name_hindi": "मृणाल राजेश ढगे",
+    "address": "/D0B: /09/",
+    "address_hindi": "जन्म तारीख ३०२००५, ्लँ",
+    "date_of_birth": "30/09/2005",
+    "gender": "Female",
+    "gender_hindi": "महिला"
+  },
+  "status": "success"
+}

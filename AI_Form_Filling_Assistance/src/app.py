@@ -11,6 +11,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 from flask import Flask, request, render_template, send_file, jsonify
+from flask import current_app
 import traceback
 from werkzeug.utils import secure_filename
 
@@ -26,6 +27,12 @@ except ImportError:
     from .ocr import ocr_image, ocr_pdf
     from .classifier import classify_document
     from .extractor import extract_document_info
+
+# Optional translator (defined at module level)
+try:
+    from googletrans import Translator
+except Exception:
+    Translator = None
 
 
 # -------------------- CONFIG --------------------
@@ -220,6 +227,41 @@ def update_result():
     except Exception as e:
         tb = traceback.format_exc()
         print(f"Error updating result: {e}\n{tb}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/translate", methods=["POST"])
+def translate_text():
+    """Translate provided extracted fields to target language using googletrans."""
+    try:
+        if Translator is None:
+            return jsonify({"success": False, "error": "Translation support not installed on server."}), 501
+
+        data = request.json or {}
+        fields = data.get('fields', {})
+        target = data.get('target')
+
+        if not fields or not target:
+            return jsonify({"success": False, "error": "Missing fields or target language"}), 400
+
+        translator = Translator()
+        translated = {}
+
+        # translate each field individually
+        for key, text in fields.items():
+            if not text:
+                translated[key] = text
+                continue
+            try:
+                res = translator.translate(text, dest=target)
+                translated[key] = res.text
+            except Exception as ex:
+                translated[key] = text
+
+        return jsonify({"success": True, "translated_fields": translated})
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"Translation error: {e}\n{tb}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

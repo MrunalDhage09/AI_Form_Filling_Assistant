@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analysis Results - Document Analyzer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -177,46 +177,7 @@
             letter-spacing: 0.5px;
         }
         
-        .confidence-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(102, 126, 234, 0.1);
-            padding: 10px 20px;
-            border-radius: 24px;
-        }
-        
-        .confidence-label {
-            color: #667eea;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .confidence-bar {
-            width: 120px;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .confidence-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            border-radius: 4px;
-            transition: width 1s ease-out;
-            animation: fillBar 1s ease-out 0.5s both;
-        }
-        
-        @keyframes fillBar {
-            from { width: 0; }
-        }
-        
-        .confidence-value {
-            color: #667eea;
-            font-size: 16px;
-            font-weight: 700;
-        }
+        /* Confidence display removed */
         
         .section-title {
             color: #1e293b;
@@ -309,10 +270,37 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
-        .field-input.hindi {
-            font-family: 'Noto Sans Devanagari', 'Mangal', sans-serif;
+
+        /* Language selector */
+        .lang-btn {
+            display: inline-block;
+            background: white;
+            color: #0f172a;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            font-weight: 700;
+            margin-right: 8px;
         }
+
+        .lang-dropdown {
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .lang-option {
+            display: inline-block;
+            margin: 4px 6px 0 0;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        
         
         .voice-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -616,12 +604,14 @@
                         🔍 EasyOCR Extraction
                     </span>
                 </div>
-                <div class="confidence-container">
-                    <span class="confidence-label">Confidence</span>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: {{ (result.classification_confidence * 100)|int }}%"></div>
+                <div class="language-container" style="margin-top:12px;">
+                    <div id="langBtn" class="lang-btn" title="Translate extracted fields">🌐 Language ▾</div>
+                    <div id="langDropdown" class="lang-dropdown" style="display:none;">
+                        <button type="button" class="lang-option" data-lang="en">English</button>
+                        <button type="button" class="lang-option" data-lang="hi">हिन्दी (Hindi)</button>
+                        <button type="button" class="lang-option" data-lang="mr">मराठी (Marathi)</button>
+                        <button type="button" class="lang-option" data-lang="ur">اردو (Urdu)</button>
                     </div>
-                    <span class="confidence-value">{{ (result.classification_confidence * 100)|int }}%</span>
                 </div>
             </div>
         </div>
@@ -649,26 +639,16 @@
                     </div>
                     {% endif %}
                     
-                    {% if result.extracted_fields.name or result.extracted_fields.name_hindi %}
+                    {% if result.extracted_fields.name %}
                     <div class="field">
                         <div class="field-label">
                             <span>👤</span>
-                            <span>Name / नाम</span>
+                            <span>Name</span>
                         </div>
-                        {% if result.extracted_fields.name %}
-                        <div class="lang-separator">🇬🇧 English</div>
                         <div class="field-input-group">
                             <input type="text" class="field-input" id="name" name="name" value="{{ result.extracted_fields.name }}">
                             <button type="button" class="voice-btn" onclick="startVoiceInput('name', 'en-IN')" title="Voice Input">🎤</button>
                         </div>
-                        {% endif %}
-                        {% if result.extracted_fields.name_hindi %}
-                        <div class="lang-separator">🇮🇳 हिन्दी</div>
-                        <div class="field-input-group">
-                            <input type="text" class="field-input hindi" id="name_hindi" name="name_hindi" value="{{ result.extracted_fields.name_hindi }}">
-                            <button type="button" class="voice-btn" onclick="startVoiceInput('name_hindi', 'hi-IN')" title="Voice Input">🎤</button>
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
                     
@@ -676,7 +656,7 @@
                     <div class="field">
                         <div class="field-label">
                             <span>🎂</span>
-                            <span>Date of Birth / जन्म तिथि</span>
+                            <span>Date of Birth</span>
                         </div>
                         <div class="field-input-group">
                             <input type="text" class="field-input" id="date_of_birth" name="date_of_birth" value="{{ result.extracted_fields.date_of_birth }}">
@@ -689,45 +669,25 @@
                     <div class="field">
                         <div class="field-label">
                             <span>⚧</span>
-                            <span>Gender / लिंग</span>
+                            <span>Gender</span>
                         </div>
-                        {% if result.extracted_fields.gender %}
-                        <div class="lang-separator">🇬🇧 English</div>
                         <div class="field-input-group">
                             <input type="text" class="field-input" id="gender" name="gender" value="{{ result.extracted_fields.gender }}">
                             <button type="button" class="voice-btn" onclick="startVoiceInput('gender', 'en-IN')" title="Voice Input">🎤</button>
                         </div>
-                        {% endif %}
-                        {% if result.extracted_fields.gender_hindi %}
-                        <div class="lang-separator">🇮🇳 हिन्दी</div>
-                        <div class="field-input-group">
-                            <input type="text" class="field-input hindi" id="gender_hindi" name="gender_hindi" value="{{ result.extracted_fields.gender_hindi }}">
-                            <button type="button" class="voice-btn" onclick="startVoiceInput('gender_hindi', 'hi-IN')" title="Voice Input">🎤</button>
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
                     
-                    {% if result.extracted_fields.father_name or result.extracted_fields.father_name_hindi %}
+                    {% if result.extracted_fields.father_name %}
                     <div class="field">
                         <div class="field-label">
                             <span>👨</span>
-                            <span>Father's Name / पिता का नाम</span>
+                            <span>Father's Name</span>
                         </div>
-                        {% if result.extracted_fields.father_name %}
-                        <div class="lang-separator">🇬🇧 English</div>
                         <div class="field-input-group">
                             <input type="text" class="field-input" id="father_name" name="father_name" value="{{ result.extracted_fields.father_name }}">
                             <button type="button" class="voice-btn" onclick="startVoiceInput('father_name', 'en-IN')" title="Voice Input">🎤</button>
                         </div>
-                        {% endif %}
-                        {% if result.extracted_fields.father_name_hindi %}
-                        <div class="lang-separator">🇮🇳 हिन्दी</div>
-                        <div class="field-input-group">
-                            <input type="text" class="field-input hindi" id="father_name_hindi" name="father_name_hindi" value="{{ result.extracted_fields.father_name_hindi }}">
-                            <button type="button" class="voice-btn" onclick="startVoiceInput('father_name_hindi', 'hi-IN')" title="Voice Input">🎤</button>
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
                     
@@ -757,26 +717,16 @@
                     </div>
                     {% endif %}
                     
-                    {% if result.extracted_fields.address or result.extracted_fields.address_hindi %}
+                    {% if result.extracted_fields.address %}
                     <div class="field field-full">
                         <div class="field-label">
                             <span>📍</span>
-                            <span>Address / पता</span>
+                            <span>Address</span>
                         </div>
-                        {% if result.extracted_fields.address %}
-                        <div class="lang-separator">🇬🇧 English</div>
                         <div class="field-input-group">
                             <textarea class="field-input" id="address" name="address" rows="3">{{ result.extracted_fields.address }}</textarea>
                             <button type="button" class="voice-btn" onclick="startVoiceInput('address', 'en-IN')" title="Voice Input">🎤</button>
                         </div>
-                        {% endif %}
-                        {% if result.extracted_fields.address_hindi %}
-                        <div class="lang-separator">🇮🇳 हिन्दी</div>
-                        <div class="field-input-group">
-                            <textarea class="field-input hindi" id="address_hindi" name="address_hindi" rows="3">{{ result.extracted_fields.address_hindi }}</textarea>
-                            <button type="button" class="voice-btn" onclick="startVoiceInput('address_hindi', 'hi-IN')" title="Voice Input">🎤</button>
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
                     
@@ -784,7 +734,7 @@
                     <div class="field">
                         <div class="field-label">
                             <span>📋</span>
-                            <span>Enrollment No / नोंदणी क्रमांक</span>
+                            <span>Enrollment No</span>
                         </div>
                         <div class="field-input-group">
                             <input type="text" class="field-input" id="enrollment_no" name="enrollment_no" value="{{ result.extracted_fields.enrollment_no }}">
@@ -1049,7 +999,86 @@
                     // saveChanges();
                 });
             });
+
+            // Language selector behavior
+            const langBtn = document.getElementById('langBtn');
+            const langDropdown = document.getElementById('langDropdown');
+                if (langBtn && langDropdown) {
+                    langBtn.addEventListener('click', function() {
+                        langDropdown.style.display = (langDropdown.style.display === 'none') ? 'inline-block' : 'none';
+                    });
+
+                    // initialize original values for restore
+                    const allFields = document.querySelectorAll('#editForm .field-input, #editForm textarea');
+                    allFields.forEach(el => {
+                        if (!el.dataset.original) el.dataset.original = el.value || '';
+                    });
+
+                    document.querySelectorAll('.lang-option').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const target = btn.getAttribute('data-lang');
+                            // If English selected, restore originals
+                            if (target === 'en') {
+                                allFields.forEach(el => {
+                                    el.value = el.dataset.original || '';
+                                });
+                                langBtn.textContent = '🌐 Language: English';
+                                showToast('Restored original English values');
+                                langDropdown.style.display = 'none';
+                                return;
+                            }
+
+                            langBtn.textContent = '🌐 Language: ' + btn.textContent.split(' ')[0];
+                            translateTo(target);
+                            langDropdown.style.display = 'none';
+                        });
+                    });
+                }
         });
+
+        function translateTo(target) {
+            const form = document.getElementById('editForm');
+            if (!form) {
+                showToast('No editable fields to translate', 'error');
+                return;
+            }
+
+            const formData = new FormData(form);
+            const fields = {};
+            for (let [k, v] of formData.entries()) {
+                fields[k] = v;
+            }
+
+            if (Object.keys(fields).length === 0) {
+                showToast('No fields to translate', 'error');
+                return;
+            }
+
+            fetch('/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: fields, target: target })
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (!data || !data.success) {
+                    showToast('Translation failed: ' + (data && data.error ? data.error : 'unknown'), 'error');
+                    return;
+                }
+                const translated = data.translated_fields || {};
+                for (const [key, val] of Object.entries(translated)) {
+                    const el = document.querySelector('[name="' + key + '"]');
+                    if (el) {
+                        el.value = val;
+                    }
+                }
+                showToast('Fields translated to ' + target.toUpperCase());
+            })
+            .catch(err => {
+                console.error('Translate error', err);
+                showToast('Translation error', 'error');
+            });
+        }
     </script>
 </body>
 </html>

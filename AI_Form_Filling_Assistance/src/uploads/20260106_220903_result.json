@@ -1,0 +1,16 @@
+{
+  "filename": "pan.jpeg",
+  "upload_timestamp": "20260106_220903",
+  "document_type": "PAN",
+  "classification_confidence": 0.6,
+  "extraction_method": "easyocr",
+  "extracted_text": "विभाग भारत सरकार\nआयकर\nINCOME TAX DEPARTMENT GOVT OF INDLA\nसरचमन\nस्थायी लेखा संख्या कार्ड\nPermanent Account Number Card\nJGZPD3121D\nनाम Name\nMRUNAL RAJESH DHAGE\nपिता का नाम Father s Name\nRAJESH DHAGE\n27112023\nजन्म तारीख ८९\nDate of Birth =E\n30/09/2005 हस्ताक्षर / Signature",
+  "extracted_fields": {
+    "document_id": "JGZPD3121D",
+    "pan_number": "JGZPD3121D",
+    "name": "MRUNAL RAJESH DHAGE",
+    "father_name": "S NAME",
+    "date_of_birth": "30/09/2005"
+  },
+  "status": "success"
+}
